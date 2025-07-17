@@ -11,10 +11,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.mypiechart.data.PieEntry
+import java.lang.Math.toRadians
+import kotlin.math.cos
+import kotlin.math.sin
 
 @Composable
 fun CustomPieChartScreen(
@@ -66,16 +74,88 @@ fun MyCustomComposePieChart(
 
         data.forEach { entry ->
             val sweepAngle = (entry.value / totalValue) * 360f
+            val percentage = (entry.value / totalValue * 100)
+            val formattedPercentage = "%.1f".format(percentage)
+            val midAngle = (startAngle + sweepAngle / 2f) % 360f
+
             drawArc(
                 color = entry.color,
                 startAngle = startAngle,
                 sweepAngle = sweepAngle,
                 useCenter = true,
             )
+
+            // 연결 선과 라벨 그리기
+            drawLabelWithLine(
+                text = "${entry.label}\n${formattedPercentage}%",
+                angle = midAngle,
+                innerRadius = chartRadius, // 선 시작점 (파이 차트의 반지름)
+                outerRadius = chartRadius * 1.2f, // 선이 끝나는 점
+                color = entry.color,
+            )
+
             startAngle += sweepAngle
         }
 
         drawCircle(color = Color.White, radius = holeRadius, center = center)
+    }
+}
+
+private fun DrawScope.drawLabelWithLine(
+    text: String,
+    angle: Float,
+    innerRadius: Float,
+    outerRadius: Float,
+    color: Color,
+) {
+    val angleInRadians = toRadians(angle.toDouble()).toFloat()
+
+    val textPaint = Paint().asFrameworkPaint().apply {
+        isAntiAlias = true
+        textSize = 14.sp.toPx()
+        textAlign = android.graphics.Paint.Align.LEFT
+    }
+
+    // 선의 시작점
+    val lineStartX = center.x + innerRadius * cos(angleInRadians)
+    val lineStartY = center.y + innerRadius * sin(angleInRadians)
+
+    // 선의 끝점
+    val lineEndX = center.x + outerRadius * cos(angleInRadians)
+    val lineEndY = center.y + outerRadius * sin(angleInRadians)
+
+    // 선 그리기
+    drawLine(
+        color = color,
+        start = Offset(lineStartX, lineStartY),
+        end = Offset(lineEndX, lineEndY),
+        strokeWidth = 2.dp.toPx()
+    )
+
+    // 텍스트 위치 계산
+    val lines = text.split("\n")
+    val textPadding = 8.dp.toPx()
+    val lineHeight = textPaint.fontSpacing
+
+    val textAnchorX: Float
+    val textAnchorY: Float = lineEndY - (lines.size - 1) * lineHeight / 2
+
+    if (angle > 90f && angle < 270f) {
+        textAnchorX = lineEndX - textPadding
+        textPaint.textAlign = android.graphics.Paint.Align.RIGHT
+    } else {
+        textAnchorX = lineEndX + textPadding
+        textPaint.textAlign = android.graphics.Paint.Align.LEFT
+    }
+
+
+    lines.forEachIndexed { index, line ->
+        drawContext.canvas.nativeCanvas.drawText(
+            line,
+            textAnchorX,
+            textAnchorY + index * lineHeight,
+            textPaint
+        )
     }
 }
 
