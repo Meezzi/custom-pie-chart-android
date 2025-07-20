@@ -2,10 +2,10 @@ package com.example.mypiechart.ui.chart
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mypiechart.data.PieEntry
@@ -51,9 +52,8 @@ fun CustomPieChartScreen(
 
         MyCustomComposePieChart(
             data = sampleData,
-            modifier = Modifier
-                .aspectRatio(1f)
-                .padding(40.dp)
+            size = 200.dp,
+            modifier = Modifier.padding(40.dp)
         )
     }
 }
@@ -61,16 +61,25 @@ fun CustomPieChartScreen(
 @Composable
 fun MyCustomComposePieChart(
     data: List<PieEntry>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    size: Dp? = null,
+    holeRatio: Float = 0.5f,
+    labelDistanceRatio: Float = 1.2f,
 ) {
-    Canvas(modifier = modifier) {
+    val chartModifier = if (size != null) {
+        modifier.size(size)
+    } else {
+        modifier
+    }
+
+    Canvas(modifier = chartModifier) {
         // 차트 설정
         val totalValue = data.sumOf { it.value.toDouble() }.toFloat()
         var startAngle = 270f
 
         // 중앙 원
-        val chartRadius = size.minDimension / 2f
-        val holeRadius = chartRadius * 0.5f
+        val chartRadius = this.size.minDimension / 2f
+        val holeRadius = chartRadius * holeRatio
 
         data.forEach { entry ->
             val sweepAngle = (entry.value / totalValue) * 360f
@@ -90,7 +99,7 @@ fun MyCustomComposePieChart(
                 text = "${entry.label}\n${formattedPercentage}%",
                 angle = midAngle,
                 innerRadius = chartRadius, // 선 시작점 (파이 차트의 반지름)
-                outerRadius = chartRadius * 1.2f, // 선이 끝나는 점
+                outerRadius = chartRadius * labelDistanceRatio, // 선이 끝나는 점
                 color = entry.color,
             )
 
@@ -147,7 +156,6 @@ private fun DrawScope.drawLabelWithLine(
         textAnchorX = lineEndX + textPadding
         textPaint.textAlign = android.graphics.Paint.Align.LEFT
     }
-
 
     lines.forEachIndexed { index, line ->
         drawContext.canvas.nativeCanvas.drawText(
