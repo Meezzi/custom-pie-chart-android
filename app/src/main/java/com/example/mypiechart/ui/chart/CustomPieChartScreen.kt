@@ -2,6 +2,7 @@ package com.example.mypiechart.ui.chart
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,9 +14,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -72,6 +76,8 @@ fun MyCustomComposePieChart(
         modifier
     }
 
+    val textMeasurer = rememberTextMeasurer()
+
     Canvas(modifier = chartModifier) {
         // 차트 설정
         val totalValue = data.sumOf { it.value.toDouble() }.toFloat()
@@ -101,6 +107,7 @@ fun MyCustomComposePieChart(
                 innerRadius = chartRadius, // 선 시작점 (파이 차트의 반지름)
                 outerRadius = chartRadius * labelDistanceRatio, // 선이 끝나는 점
                 color = entry.color,
+                textMeasurer = textMeasurer
             )
 
             startAngle += sweepAngle
@@ -116,14 +123,9 @@ private fun DrawScope.drawLabelWithLine(
     innerRadius: Float,
     outerRadius: Float,
     color: Color,
+    textMeasurer: TextMeasurer,
 ) {
     val angleInRadians = toRadians(angle.toDouble()).toFloat()
-
-    val textPaint = Paint().asFrameworkPaint().apply {
-        isAntiAlias = true
-        textSize = 14.sp.toPx()
-        textAlign = android.graphics.Paint.Align.LEFT
-    }
 
     // 선의 시작점
     val lineStartX = center.x + innerRadius * cos(angleInRadians)
@@ -141,28 +143,38 @@ private fun DrawScope.drawLabelWithLine(
         strokeWidth = 2.dp.toPx()
     )
 
-    // 텍스트 위치 계산
+    // 텍스트 스타일 설정
+    val textStyle = TextStyle(
+        fontSize = 14.sp,
+        color = Color.Black,
+        fontWeight = FontWeight.Normal
+    )
+
+    // 텍스트를 줄별로 분리
     val lines = text.split("\n")
     val textPadding = 8.dp.toPx()
-    val lineHeight = textPaint.fontSpacing
-
-    val textAnchorX: Float
-    val textAnchorY: Float = lineEndY - (lines.size - 1) * lineHeight / 2
-
-    if (angle > 90f && angle < 270f) {
-        textAnchorX = lineEndX - textPadding
-        textPaint.textAlign = android.graphics.Paint.Align.RIGHT
-    } else {
-        textAnchorX = lineEndX + textPadding
-        textPaint.textAlign = android.graphics.Paint.Align.LEFT
-    }
 
     lines.forEachIndexed { index, line ->
-        drawContext.canvas.nativeCanvas.drawText(
-            line,
-            textAnchorX,
-            textAnchorY + index * lineHeight,
-            textPaint
+        val textLayoutResult = textMeasurer.measure(
+            text = line,
+            style = textStyle
+        )
+
+        val textWidth = textLayoutResult.size.width
+        val textHeight = textLayoutResult.size.height
+
+        // 텍스트 위치 계산
+        val textX = if (angle > 90f && angle < 270f) {
+            lineEndX - textPadding - textWidth // 오른쪽 정렬
+        } else {
+            lineEndX + textPadding // 왼쪽 정렬
+        }
+
+        val textY = lineEndY + (index - lines.size / 2f + 0.5f) * textHeight
+
+        drawText(
+            textLayoutResult = textLayoutResult,
+            topLeft = Offset(textX, textY - textHeight / 2)
         )
     }
 }
