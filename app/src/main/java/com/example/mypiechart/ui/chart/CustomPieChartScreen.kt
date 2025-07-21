@@ -68,50 +68,40 @@ fun MyCustomComposePieChart(
     holeRatio: Float = 0.5f,
     labelDistanceRatio: Float = 1.2f,
 ) {
-    val chartModifier = if (size != null) {
-        modifier.size(size)
-    } else {
-        modifier
-    }
-
     val textMeasurer = rememberTextMeasurer()
 
-    Canvas(modifier = chartModifier) {
-        // 차트 설정
-        val totalValue = data.sumOf { it.value.toDouble() }.toFloat()
-        var startAngle = 270f
+    // 기본 설정값들 계산
+    val config = calculateChartConfig(
+        data = data,
+        size = size,
+        labelDistanceRatio = labelDistanceRatio,
+        textMeasurer = textMeasurer
+    )
 
-        // 중앙 원
-        val chartRadius = this.size.minDimension / 2f
-        val holeRadius = chartRadius * holeRatio
+    Canvas(modifier = modifier.size(config.totalCanvasSize)) {
+        // 차트 데이터 계산
+        val chartData = prepareChartData(data)
 
-        data.forEach { entry ->
-            val sweepAngle = (entry.value / totalValue) * 360f
-            val percentage = (entry.value / totalValue * 100)
-            val formattedPercentage = "%.1f".format(percentage)
-            val midAngle = (startAngle + sweepAngle / 2f) % 360f
+        // 파이 조각들 그리기
+        drawPieSlices(
+            data = data,
+            chartData = chartData,
+            config = config
+        )
 
-            drawArc(
-                color = entry.color,
-                startAngle = startAngle,
-                sweepAngle = sweepAngle,
-                useCenter = true,
-            )
+        // 라벨과 선 그리기
+        drawLabelsWithLines(
+            data = data,
+            chartData = chartData,
+            config = config,
+            textMeasurer = textMeasurer
+        )
 
-            // 연결 선과 라벨 그리기
-            drawLabelWithLine(
-                text = "${entry.label}\n${formattedPercentage}%",
-                angle = midAngle,
-                innerRadius = chartRadius, // 선 시작점 (파이 차트의 반지름)
-                outerRadius = chartRadius * labelDistanceRatio, // 선이 끝나는 점
-                color = entry.color,
-                textMeasurer = textMeasurer
-            )
-
-            startAngle += sweepAngle
-        }
-
-        drawCircle(color = Color.White, radius = holeRadius, center = center)
+        // 중앙 원 그리기
+        drawCenterHole(
+            radius = config.chartRadiusPx * holeRatio,
+            center = center
+        )
     }
 }
 
