@@ -245,6 +245,36 @@ private fun DrawScope.drawPieSlices(
 }
 
 /**
+ * 파이차트의 각 조각에 대한 라벨과 연결선을 그림
+ *
+ * @param data 파이차트 원본 데이터 리스트
+ * @param chartData 미리 계산된 차트 데이터 (각도, 포맷된 백분율 등)
+ * @param config 차트 설정값
+ * @param textMeasurer 텍스트 크기 측정을 위한 객체
+ */
+private fun DrawScope.drawLabelsWithLines(
+    data: List<PieEntry>,
+    chartData: ChartData,
+    config: ChartConfig,
+    textMeasurer: TextMeasurer
+) {
+    data.forEachIndexed { index, entry ->
+        val angle = chartData.angles[index]
+        val formattedPercentage = chartData.formattedPercentages[index]
+        val text = "${entry.label}\n${formattedPercentage}%"
+
+        drawLabelWithLine(
+            text = text,
+            angle = angle,
+            innerRadius = config.chartRadiusPx,
+            outerRadius = config.chartRadiusPx * 1.2f, // labelDistanceRatio
+            color = entry.color,
+            textMeasurer = textMeasurer
+        )
+    }
+}
+
+/**
  * 지정된 각도와 위치에 라벨과 연결선을 그림
  *
  * @param text 표시할 텍스트 (라벨명과 백분율 포함)
