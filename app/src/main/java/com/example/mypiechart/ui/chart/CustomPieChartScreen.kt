@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -23,6 +24,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.mypiechart.data.ChartConfig
+import com.example.mypiechart.data.ChartData
 import com.example.mypiechart.data.PieEntry
 import java.lang.Math.toRadians
 import kotlin.math.cos
@@ -103,6 +106,50 @@ fun MyCustomComposePieChart(
             center = center
         )
     }
+}
+
+/**
+ * 파이 차트 렌더링에 필요한 설정 값들을 계산하여 ChartConfig 객체 생성
+ *
+ * @param data 파이 차트에 표시할 데이터 리스트
+ * @param size 차트 본체의 크기 (지름)
+ * @param labelDistanceRatio 차트 중심에서 라벨까지의 거리 비율 (1.0 = 차트 반지름과 같음)
+ * @param textMeasurer 텍스트 크기 측정을 위한 TextMeasurer 객체
+ * @return 계산된 차트 설정 값들을 담은 ChartConfig 객체
+ */
+@Composable
+private fun calculateChartConfig(
+    data: List<PieEntry>,
+    size: Dp,
+    labelDistanceRatio: Float,
+    textMeasurer: TextMeasurer
+): ChartConfig {
+    val chartRadiusPx = with(LocalDensity.current) { size.toPx() / 2 }
+
+    val textStyle = TextStyle(
+        fontSize = 14.sp,
+        color = Color.Black,
+        fontWeight = FontWeight.Normal
+    )
+
+    val maxTextWidth = with(LocalDensity.current) {
+        calculateMaxTextWidth(data, textMeasurer, textStyle).toDp()
+    }
+
+    val textPadding = 8.dp
+    val lineExtension = with(LocalDensity.current) {
+        (chartRadiusPx * (labelDistanceRatio - 1f)).toDp()
+    }
+
+    val totalCanvasSize = size + (lineExtension + maxTextWidth + textPadding) * 2
+
+    return ChartConfig(
+        chartRadiusPx = chartRadiusPx,
+        totalCanvasSize = totalCanvasSize,
+        maxTextWidth = maxTextWidth,
+        textPadding = textPadding,
+        lineExtension = lineExtension
+    )
 }
 
 /**
