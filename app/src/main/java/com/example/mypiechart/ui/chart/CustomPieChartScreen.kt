@@ -275,6 +275,20 @@ private fun DrawScope.drawLabelsWithLines(
 }
 
 /**
+ * 파이 차트 중앙에 원을 그림
+ *
+ * @param radius 중앙 원의 반지름
+ * @param center 원을 그릴 중심 좌표
+ */
+private fun DrawScope.drawCenterHole(radius: Float, center: Offset) {
+    drawCircle(
+        color = Color.White,
+        radius = radius,
+        center = center
+    )
+}
+
+/**
  * 지정된 각도와 위치에 라벨과 연결선을 그림
  *
  * @param text 표시할 텍스트 (라벨명과 백분율 포함)
