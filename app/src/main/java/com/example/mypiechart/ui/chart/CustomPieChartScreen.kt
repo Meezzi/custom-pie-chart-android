@@ -179,9 +179,9 @@ private fun calculateMaxTextWidth(
 }
 
 /**
- * 파이 차트 렌더링에 필요한 데이터들을 미리 계산하여 ChartData 객체 생성
+ * 파이차트 렌더링에 필요한 데이터들을 미리 계산하여 ChartData 객체 생성
  *
- * @param data 파이 차트에 표시할 원본 데이터 리스트
+ * @param data 파이차트에 표시할 원본 데이터 리스트
  * @return 계산된 차트 데이터를 담은 ChartData 객체
  */
 private fun prepareChartData(data: List<PieEntry>): ChartData {
@@ -206,6 +206,42 @@ private fun prepareChartData(data: List<PieEntry>): ChartData {
         formattedPercentages = formattedPercentages,
         angles = angles
     )
+}
+
+/**
+ * 파이차트의 각 조각들을 그림
+ *
+ * @param data 파이차트 원본 데이터 리스트
+ * @param chartData 미리 계산된 차트 데이터 (총합, 백분율 등)
+ * @param config 차트 설정값 (반지름, 크기 등)
+ */
+private fun DrawScope.drawPieSlices(
+    data: List<PieEntry>,
+    chartData: ChartData,
+    config: ChartConfig
+) {
+    var startAngle = 270f
+
+    data.forEach { entry ->
+        val sweepAngle = (entry.value / chartData.totalValue) * 360f
+
+        drawArc(
+            color = entry.color,
+            startAngle = startAngle,
+            sweepAngle = sweepAngle,
+            useCenter = true,
+            topLeft = Offset(
+                center.x - config.chartRadiusPx,
+                center.y - config.chartRadiusPx
+            ),
+            size = androidx.compose.ui.geometry.Size(
+                config.chartRadiusPx * 2,
+                config.chartRadiusPx * 2
+            )
+        )
+
+        startAngle += sweepAngle
+    }
 }
 
 /**
