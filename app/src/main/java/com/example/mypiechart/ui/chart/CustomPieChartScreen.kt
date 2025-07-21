@@ -56,8 +56,7 @@ fun CustomPieChartScreen(
 
         MyCustomComposePieChart(
             data = sampleData,
-            size = 200.dp,
-            modifier = Modifier.padding(40.dp)
+            size = 240.dp,
         )
     }
 }
@@ -66,7 +65,7 @@ fun CustomPieChartScreen(
 fun MyCustomComposePieChart(
     data: List<PieEntry>,
     modifier: Modifier = Modifier,
-    size: Dp? = null,
+    size: Dp = 240.dp,
     holeRatio: Float = 0.5f,
     labelDistanceRatio: Float = 1.2f,
 ) {
