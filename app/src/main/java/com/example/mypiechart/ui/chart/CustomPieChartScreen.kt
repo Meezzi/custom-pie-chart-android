@@ -153,6 +153,32 @@ private fun calculateChartConfig(
 }
 
 /**
+ * 파이 차트 라벨 텍스트 중에서 가장 긴 텍스트의 너비 계산
+ *
+ * @param data 파이차트에 표시할 데이터 리스트
+ * @param textMeasurer 텍스트 크기 측정을 위한 TextMeasurer 객체
+ * @param textStyle 텍스트 렌더링에 사용할 스타일 (폰트 크기, 굵기 등)
+ * @return 가장 긴 텍스트 줄의 너비 (픽셀 단위), 데이터가 없으면 0
+ */
+private fun calculateMaxTextWidth(
+    data: List<PieEntry>,
+    textMeasurer: TextMeasurer,
+    textStyle: TextStyle
+): Int {
+    val totalValue = data.sumOf { it.value.toDouble() }.toFloat()
+
+    return data.maxOfOrNull { entry ->
+        val percentage = (entry.value / totalValue * 100)
+        val formattedPercentage = "%.1f".format(percentage)
+        val text = "${entry.label}\n${formattedPercentage}%"
+
+        text.split("\n").maxOfOrNull { line ->
+            textMeasurer.measure(line, textStyle).size.width
+        } ?: 0
+    } ?: 0
+}
+
+/**
  * 지정된 각도와 위치에 라벨과 연결선을 그림
  *
  * @param text 표시할 텍스트 (라벨명과 백분율 포함)
