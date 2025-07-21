@@ -170,6 +170,7 @@ private fun DrawScope.drawLabelWithLine(
             lineEndX + textPadding // 왼쪽 정렬
         }
 
+        // 여러 줄 텍스트의 세로 중앙 정렬
         val textY = lineEndY + (index - lines.size / 2f + 0.5f) * textHeight
 
         drawText(
