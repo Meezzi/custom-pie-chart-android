@@ -153,7 +153,7 @@ private fun calculateChartConfig(
 }
 
 /**
- * 파이 차트 라벨 텍스트 중에서 가장 긴 텍스트의 너비 계산
+ * 파이차트 라벨 텍스트들 중에서 가장 긴 텍스트의 너비 계산
  *
  * @param data 파이차트에 표시할 데이터 리스트
  * @param textMeasurer 텍스트 크기 측정을 위한 TextMeasurer 객체
@@ -176,6 +176,36 @@ private fun calculateMaxTextWidth(
             textMeasurer.measure(line, textStyle).size.width
         } ?: 0
     } ?: 0
+}
+
+/**
+ * 파이 차트 렌더링에 필요한 데이터들을 미리 계산하여 ChartData 객체 생성
+ *
+ * @param data 파이 차트에 표시할 원본 데이터 리스트
+ * @return 계산된 차트 데이터를 담은 ChartData 객체
+ */
+private fun prepareChartData(data: List<PieEntry>): ChartData {
+    val totalValue = data.sumOf { it.value.toDouble() }.toFloat()
+
+    val percentages = data.map { (it.value / totalValue * 100) }
+    val formattedPercentages = percentages.map { "%.1f".format(it) }
+
+    val angles = mutableListOf<Float>()
+    var currentAngle = 270f // 12시 방향부터 시작
+
+    data.forEach { entry ->
+        val sweepAngle = (entry.value / totalValue) * 360f
+        val midAngle = (currentAngle + sweepAngle / 2f) % 360f
+        angles.add(midAngle)
+        currentAngle += sweepAngle
+    }
+
+    return ChartData(
+        totalValue = totalValue,
+        percentages = percentages,
+        formattedPercentages = formattedPercentages,
+        angles = angles
+    )
 }
 
 /**
