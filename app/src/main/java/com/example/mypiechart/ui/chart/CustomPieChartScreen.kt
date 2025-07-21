@@ -115,6 +115,16 @@ fun MyCustomComposePieChart(
     }
 }
 
+/**
+ * 지정된 각도와 위치에 라벨과 연결선을 그림
+ *
+ * @param text 표시할 텍스트 (라벨명과 백분율 포함)
+ * @param angle 연결선이 향할 각도
+ * @param innerRadius 연결선 시작점까지의 거리
+ * @param outerRadius 연결선 끝점까지의 거리
+ * @param color 연결선 색상
+ * @param textMeasurer 텍스트 크기 측정 객체
+ */
 private fun DrawScope.drawLabelWithLine(
     text: String,
     angle: Float,
@@ -125,51 +135,70 @@ private fun DrawScope.drawLabelWithLine(
 ) {
     val angleInRadians = toRadians(angle.toDouble()).toFloat()
 
-    // 선의 시작점
-    val lineStartX = center.x + innerRadius * cos(angleInRadians)
-    val lineStartY = center.y + innerRadius * sin(angleInRadians)
-
-    // 선의 끝점
-    val lineEndX = center.x + outerRadius * cos(angleInRadians)
-    val lineEndY = center.y + outerRadius * sin(angleInRadians)
+    // 선의 시작점과 끝점 계산
+    val lineStart = Offset(
+        center.x + innerRadius * cos(angleInRadians),
+        center.y + innerRadius * sin(angleInRadians)
+    )
+    val lineEnd = Offset(
+        center.x + outerRadius * cos(angleInRadians),
+        center.y + outerRadius * sin(angleInRadians)
+    )
 
     // 선 그리기
     drawLine(
         color = color,
-        start = Offset(lineStartX, lineStartY),
-        end = Offset(lineEndX, lineEndY),
+        start = lineStart,
+        end = lineEnd,
         strokeWidth = 2.dp.toPx()
     )
 
-    // 텍스트 스타일 설정
+    // 텍스트 그리기
+    drawTextLabel(
+        text = text,
+        angle = angle,
+        lineEnd = lineEnd,
+        textMeasurer = textMeasurer
+    )
+}
+
+/**
+ * 연결선 끝에 텍스트 라벨을 그림
+ *
+ * @param text 표시할 텍스트 (줄바꿈 문자로 여러 줄 지원)
+ * @param angle 텍스트 위치를 결정하는 각도 (정렬 방향 계산용)
+ * @param lineEnd 연결선의 끝점 좌표 (텍스트 기준점)
+ * @param textMeasurer 텍스트 크기 측정 객체
+ */
+private fun DrawScope.drawTextLabel(
+    text: String,
+    angle: Float,
+    lineEnd: Offset,
+    textMeasurer: TextMeasurer
+) {
     val textStyle = TextStyle(
         fontSize = 14.sp,
         color = Color.Black,
         fontWeight = FontWeight.Normal
     )
 
-    // 텍스트를 줄별로 분리
     val lines = text.split("\n")
     val textPadding = 8.dp.toPx()
 
     lines.forEachIndexed { index, line ->
-        val textLayoutResult = textMeasurer.measure(
-            text = line,
-            style = textStyle
-        )
-
+        val textLayoutResult = textMeasurer.measure(line, textStyle)
         val textWidth = textLayoutResult.size.width
         val textHeight = textLayoutResult.size.height
 
-        // 텍스트 위치 계산
+        // 텍스트 위치 계산 (각도에 따라 좌우 정렬)
         val textX = if (angle > 90f && angle < 270f) {
-            lineEndX - textPadding - textWidth // 오른쪽 정렬
+            lineEnd.x - textPadding - textWidth // 왼쪽 반원: 오른쪽 정렬
         } else {
-            lineEndX + textPadding // 왼쪽 정렬
+            lineEnd.x + textPadding // 오른쪽 반원: 왼쪽 정렬
         }
 
         // 여러 줄 텍스트의 세로 중앙 정렬
-        val textY = lineEndY + (index - lines.size / 2f + 0.5f) * textHeight
+        val textY = lineEnd.y + (index - lines.size / 2f + 0.5f) * textHeight
 
         drawText(
             textLayoutResult = textLayoutResult,
